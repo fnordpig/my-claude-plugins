@@ -13,7 +13,7 @@
   "plugins": [
     {
       "name": "archiuvium-plugin-creator",
-      "source": "archiuvium-plugin-creator",
+      "source": "./plugins/archiuvium-plugin-creator",
       "description": "Kitchen-sink template plugin demonstrating every Claude Code plugin component type. Includes a skill that guides users through creating new plugins from scratch, with working examples of skills, commands, agents, hooks, and MCP servers.",
       "version": "0.1.0",
       "author": {
