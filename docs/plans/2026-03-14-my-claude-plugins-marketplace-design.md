@@ -1,4 +1,4 @@
-# my-laude-plugins Marketplace Design
+# my-claude-plugins Marketplace Design
 
 **Date:** 2026-03-14
 **Audience:** Team/Org
@@ -36,7 +36,7 @@ Claude Plugins/
 
 ## Marketplace Manifest
 
-- **Name:** `my-laude-plugins`
+- **Name:** `my-claude-plugins`
 - **Schema:** `https://anthropic.com/claude-code/marketplace.schema.json`
 - **`metadata.pluginRoot`:** `./plugins` (allows short source paths)
 - **Plugin source type:** Relative paths (monorepo)

@@ -1,4 +1,4 @@
-# my-laude-plugins
+# my-claude-plugins
 
 Team plugin marketplace for Claude Code.
 
@@ -11,7 +11,7 @@ Team plugin marketplace for Claude Code.
 Or from a Git host:
 
 ```shell
-/plugin marketplace add your-org/my-laude-plugins
+/plugin marketplace add your-org/my-claude-plugins
 ```
 
 ## Available Plugins
@@ -23,7 +23,7 @@ Or from a Git host:
 ## Installing a Plugin
 
 ```shell
-/plugin install archiuvium-plugin-creator@my-laude-plugins
+/plugin install archiuvium-plugin-creator@my-claude-plugins
 ```
 
 ## Adding Plugins
@@ -37,10 +37,10 @@ Add to your project's `.claude/settings.json` to auto-prompt team members:
 ```json
 {
   "extraKnownMarketplaces": {
-    "my-laude-plugins": {
+    "my-claude-plugins": {
       "source": {
         "source": "github",
-        "repo": "your-org/my-laude-plugins"
+        "repo": "your-org/my-claude-plugins"
       }
     }
   }

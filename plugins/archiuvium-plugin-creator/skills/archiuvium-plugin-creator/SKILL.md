@@ -3,7 +3,7 @@ name: archiuvium-plugin-creator
 description: >
   Guide for creating complete Claude Code plugins with all component types
   (skills, commands, agents, hooks, MCP servers) and registering them in the
-  my-laude-plugins marketplace. Use this skill whenever the user wants to
+  my-claude-plugins marketplace. Use this skill whenever the user wants to
   create a new plugin, scaffold a plugin, add a plugin to the marketplace,
   build a Claude Code extension, or asks "how do I make a plugin?" Even if
   they only mention one component type (like "I want to add a hook" or
@@ -14,7 +14,7 @@ description: >
 # Archiuvium Plugin Creator
 
 Create complete, well-structured Claude Code plugins and register them in the
-my-laude-plugins marketplace. This skill walks you through the entire process
+my-claude-plugins marketplace. This skill walks you through the entire process
 from idea to installable plugin.
 
 ## When to Use This
@@ -140,7 +140,7 @@ Then install locally:
 
 ```shell
 /plugin marketplace add ./path/to/Claude-Plugins
-/plugin install <plugin-name>@my-laude-plugins
+/plugin install <plugin-name>@my-claude-plugins
 ```
 
 ## Quick Reference

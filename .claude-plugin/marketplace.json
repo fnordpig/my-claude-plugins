@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "my-laude-plugins",
+  "name": "my-claude-plugins",
   "description": "Team plugin marketplace for Claude Code extensions",
   "owner": {
     "name": "Ralph Waugh"

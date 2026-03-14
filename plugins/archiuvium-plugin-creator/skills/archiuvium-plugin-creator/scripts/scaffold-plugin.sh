@@ -156,7 +156,7 @@ TODO: Describe this plugin.
 ## Installation
 
 \`\`\`shell
-/plugin install $PLUGIN_NAME@my-laude-plugins
+/plugin install $PLUGIN_NAME@my-claude-plugins
 \`\`\`
 EOF
 

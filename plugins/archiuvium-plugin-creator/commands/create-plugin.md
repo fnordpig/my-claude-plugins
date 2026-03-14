@@ -1,10 +1,10 @@
 ---
-description: Scaffold a new plugin for the my-laude-plugins marketplace
+description: Scaffold a new plugin for the my-claude-plugins marketplace
 argument-hint: <plugin-name> [skill] [command] [agent] [hook] [mcp] [all]
 allowed-tools: [Read, Write, Edit, Bash, Glob, Grep]
 ---
 
-Create a new Claude Code plugin in the my-laude-plugins marketplace.
+Create a new Claude Code plugin in the my-claude-plugins marketplace.
 
 ## Arguments
 

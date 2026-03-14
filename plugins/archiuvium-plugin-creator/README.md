@@ -1,13 +1,13 @@
 # archiuvium-plugin-creator
 
-Kitchen-sink template plugin for the my-laude-plugins marketplace. Demonstrates
+Kitchen-sink template plugin for the my-claude-plugins marketplace. Demonstrates
 every Claude Code plugin component type with working examples, and includes a
 skill that guides users through creating new plugins from scratch.
 
 ## Installation
 
 ```shell
-/plugin install archiuvium-plugin-creator@my-laude-plugins
+/plugin install archiuvium-plugin-creator@my-claude-plugins
 ```
 
 ## What's Included
