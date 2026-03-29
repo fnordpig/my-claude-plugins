@@ -78,7 +78,7 @@ MY_VAR=1 xcrun xctrace record --launch -- ./my-binary
 xcrun xctrace record --env MY_VAR=1 --launch -- ./my-binary
 ```
 
-**What Metal System Trace can and cannot see:** This template captures GPU events dispatched through Metal command buffers — MPS operations, render encoders, blit encoders. It does **not** capture raw compute dispatches that bypass Metal's command buffer system. If your workload uses custom Metal compute pipelines without MPS, and the trace produces no GPU intervals, try the `Time Profiler` template instead to capture CPU-side Metal driver calls, or use Xcode's Metal Debugger for shader-level GPU profiling.
+**Empty traces:** All Metal GPU work (MPS, custom compute shaders, render passes) goes through `MTLCommandBuffer` and should appear in Metal System Trace. If your trace has no GPU intervals, the workload is likely not dispatching Metal GPU work at all — it may be running on CPU. Use the `Time Profiler` template to confirm where the work is actually happening.
 
 ### Profiling with cargo-instruments (Rust shortcut)
 
