@@ -5,11 +5,11 @@ Semantic code search for Claude Code — find code by meaning, understand archit
 ## Installation
 
 ```shell
-# 1. Install the MCP server (requires Rust toolchain)
-cargo install --git https://github.com/fnordpig/ripvec ripvec-mcp
+# 1. Install the CLI + MCP server (requires Rust toolchain)
+cargo install --git https://github.com/fnordpig/ripvec ripvec ripvec-mcp
 
 # With NVIDIA GPU acceleration (Linux, requires CUDA toolkit):
-cargo install --git https://github.com/fnordpig/ripvec ripvec-mcp --features cuda
+cargo install --git https://github.com/fnordpig/ripvec ripvec ripvec-mcp --features cuda
 
 # 2. Install the plugin
 /install github:fnordpig/my-claude-plugins/plugins/ripvec
