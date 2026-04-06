@@ -1,22 +1,18 @@
 #!/usr/bin/env bash
-# Verify ripvec and ripvec-mcp are in PATH. Print install instructions if missing.
+# Report ripvec-mcp status. The binary auto-installs via the MCP command
+# wrapper (bin/ensure-ripvec-mcp.sh), so this just reports readiness.
 
-MISSING=()
-command -v ripvec-mcp &>/dev/null || MISSING+=(ripvec-mcp)
-command -v ripvec &>/dev/null || MISSING+=(ripvec)
+set -euo pipefail
 
-if [[ ${#MISSING[@]} -gt 0 ]]; then
-	echo "Missing: ${MISSING[*]}"
-	echo ""
-	echo "Install with:"
-	echo "  cargo install --git https://github.com/fnordpig/ripvec ripvec ripvec-mcp"
-	echo ""
-	echo "For NVIDIA GPU acceleration (Linux):"
-	echo "  cargo install --git https://github.com/fnordpig/ripvec ripvec ripvec-mcp --features cuda"
-	echo ""
-	echo "Requires Rust toolchain: https://rustup.rs"
-	exit 1
+if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
+	BIN="${CLAUDE_PLUGIN_ROOT}/bin/ripvec-mcp"
+else
+	BIN="$(cd "$(dirname "$0")/../.." && pwd)/bin/ripvec-mcp"
 fi
 
-VERSION=$(ripvec-mcp --version 2>/dev/null || echo "")
-echo "ripvec-mcp${VERSION:+ $VERSION} ready."
+if [[ -x "$BIN" ]]; then
+	VERSION=$("$BIN" --version 2>/dev/null || echo "unknown")
+	echo "ripvec-mcp ${VERSION} ready."
+else
+	echo "ripvec-mcp will auto-install on first use."
+fi
