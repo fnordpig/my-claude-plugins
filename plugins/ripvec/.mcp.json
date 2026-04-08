@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "ripvec": {
-      "command": "bash",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/bin/ensure-ripvec-mcp.sh"]
+      "command": "${CLAUDE_PLUGIN_ROOT}/bin/ripvec-mcp",
+      "args": []
     }
   }
 }
