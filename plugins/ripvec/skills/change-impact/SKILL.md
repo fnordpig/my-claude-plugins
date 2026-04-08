@@ -7,13 +7,15 @@ description: "Use before making significant code changes to understand the blast
 
 Before changing a function signature, moving a module, or refactoring an API — understand what depends on it. ripvec provides the full blast radius through its MCP tools and LSP operations.
 
-## Tool discovery
+## Tool discovery and readiness
 
 ripvec's MCP tools are deferred — use `ToolSearch` to load them before calling:
 ```
-ToolSearch("select:mcp__ripvec__get_repo_map,mcp__ripvec__search_code,mcp__ripvec__find_similar")
+ToolSearch("select:mcp__ripvec__get_repo_map,mcp__ripvec__search_code,mcp__ripvec__find_similar,mcp__ripvec__index_status")
 ```
 If running as a plugin, tools may be namespaced as `mcp__plugin_ripvec_ripvec__*` — search for `ripvec` to find them.
+
+**Check index readiness first.** Call `index_status` before searching. If it returns `"indexing": true`, the response includes phase, percentage, and ETA (e.g., "embedding 1200/2383 files (50%, ~16s remaining)"). Wait for indexing to complete — results will be incomplete or empty while building. For small repos this takes 1-3 seconds; for large repos up to 30 seconds.
 
 ## The three-tool pattern
 

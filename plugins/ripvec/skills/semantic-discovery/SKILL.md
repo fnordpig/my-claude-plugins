@@ -7,13 +7,15 @@ description: "Use when searching for code by concept or behavior rather than exa
 
 When someone asks "find the code that handles database connection pooling" — they don't mean grep for "connection pooling". They mean: find the actual implementation, wherever it lives, whatever it's called.
 
-## Tool discovery
+## Tool discovery and readiness
 
 ripvec's MCP tools are deferred — use `ToolSearch` to load them before calling:
 ```
-ToolSearch("select:mcp__ripvec__search_code,mcp__ripvec__search_text,mcp__ripvec__find_similar")
+ToolSearch("select:mcp__ripvec__search_code,mcp__ripvec__search_text,mcp__ripvec__find_similar,mcp__ripvec__index_status")
 ```
 If running as a plugin, tools may be namespaced as `mcp__plugin_ripvec_ripvec__*` — search for `ripvec` to find them.
+
+**Check index readiness first.** Call `index_status` before searching. If it returns `"indexing": true`, the response includes phase, percentage, and ETA (e.g., "embedding 1200/2383 files (50%, ~16s remaining)"). Wait for indexing to complete — results will be incomplete or empty while building. For small repos this takes 1-3 seconds; for large repos up to 30 seconds.
 
 ## The decision: Grep vs search_code vs LSP
 
