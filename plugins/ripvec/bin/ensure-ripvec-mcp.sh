@@ -72,10 +72,10 @@ get_latest_version() {
 	local tag=""
 	if command -v curl &>/dev/null; then
 		tag=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null |
-			grep -o '"tag_name":"[^"]*"' | head -1 | cut -d'"' -f4)
+			grep -o '"tag_name": *"[^"]*"' | head -1 | cut -d'"' -f4)
 	elif command -v wget &>/dev/null; then
 		tag=$(wget -qO- "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null |
-			grep -o '"tag_name":"[^"]*"' | head -1 | cut -d'"' -f4)
+			grep -o '"tag_name": *"[^"]*"' | head -1 | cut -d'"' -f4)
 	fi
 
 	# Strip leading 'v' from tag (v0.12.1 → 0.12.1)
