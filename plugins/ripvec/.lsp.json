@@ -1,7 +1,7 @@
 {
   "ripvec": {
-    "command": "${CLAUDE_PLUGIN_ROOT}/bin/ripvec-mcp",
-    "args": ["--lsp"],
+    "command": "sh",
+    "args": ["-c", "BIN=\"${CLAUDE_PLUGIN_DATA:-${CLAUDE_PLUGIN_ROOT}}/bin/ripvec-mcp\"; test -x \"$BIN\" || bash \"${CLAUDE_PLUGIN_ROOT}/bin/ensure-ripvec-mcp.sh\" --install-only >&2; exec \"$BIN\" --lsp"],
     "extensionToLanguage": {
       ".sh": "bash",
       ".bash": "bash",

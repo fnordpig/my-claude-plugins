@@ -1,19 +1,21 @@
 #!/usr/bin/env bash
 # Auto-download and exec ripvec-mcp for the current platform.
 #
-# Called as the MCP server command — downloads the latest release binary
-# on first use, caches it in the plugin's bin/ directory, then exec's
-# into it so stdin/stdout pass through for the MCP stdio protocol.
-#
-# Checks for new releases once per day (cached in .last-check).
+# Downloads the latest release binary on first use, caches in
+# ${CLAUDE_PLUGIN_DATA}/bin/ (persists across plugin updates).
+# Checks for new releases once per day.
 
 set -euo pipefail
 
 REPO="fnordpig/ripvec"
-CHECK_INTERVAL=86400 # 1 day in seconds
+CHECK_INTERVAL=86400 # 1 day
 
-# Resolve plugin root (handles both ${CLAUDE_PLUGIN_ROOT} and script-relative)
-if [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
+# Binary cache goes in PLUGIN_DATA (survives plugin updates)
+# Fall back to PLUGIN_ROOT/bin if DATA isn't available
+if [[ -n "${CLAUDE_PLUGIN_DATA:-}" ]]; then
+	BIN_DIR="${CLAUDE_PLUGIN_DATA}/bin"
+	mkdir -p "$BIN_DIR"
+elif [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
 	BIN_DIR="${CLAUDE_PLUGIN_ROOT}/bin"
 else
 	BIN_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -29,35 +31,29 @@ ARCH="$(uname -m)"
 
 case "${OS}-${ARCH}" in
 Darwin-arm64) TARGET="aarch64-apple-darwin" ;;
-Darwin-x86_64) TARGET="aarch64-apple-darwin" ;; # Rosetta can run ARM
+Darwin-x86_64) TARGET="aarch64-apple-darwin" ;;
 Linux-x86_64) TARGET="x86_64-unknown-linux-gnu" ;;
 Linux-aarch64) TARGET="aarch64-unknown-linux-gnu" ;;
 *)
 	echo "Unsupported platform: ${OS}-${ARCH}" >&2
-	echo "Install manually: cargo install ripvec-mcp" >&2
 	exit 1
 	;;
 esac
 
-# Auto-detect CUDA: if nvidia-smi exists, the CUDA runtime is installed.
-# Override: RIPVEC_CUDA=0 to force CPU, RIPVEC_CUDA=1 to force CUDA.
+# Auto-detect CUDA
 if [[ "$OS" == "Linux" ]]; then
 	if [[ "${RIPVEC_CUDA:-auto}" == "auto" ]]; then
-		if command -v nvidia-smi &>/dev/null; then
-			TARGET="${TARGET}-cuda"
-		fi
+		command -v nvidia-smi &>/dev/null && TARGET="${TARGET}-cuda"
 	elif [[ "${RIPVEC_CUDA:-}" == "1" ]]; then
 		TARGET="${TARGET}-cuda"
 	fi
 fi
 
-# Fetch the latest release version from GitHub.
-# Cached for CHECK_INTERVAL to avoid hitting the API on every session.
+# Fetch latest version (cached for CHECK_INTERVAL)
 get_latest_version() {
 	local now
 	now=$(date +%s)
 
-	# Use cached version if check was recent
 	if [[ -f "$LAST_CHECK_FILE" ]]; then
 		local last_check cached_version
 		last_check=$(head -1 "$LAST_CHECK_FILE")
@@ -68,7 +64,6 @@ get_latest_version() {
 		fi
 	fi
 
-	# Query GitHub API for latest release tag
 	local tag=""
 	if command -v curl &>/dev/null; then
 		tag=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null |
@@ -78,14 +73,11 @@ get_latest_version() {
 			grep -o '"tag_name": *"[^"]*"' | head -1 | cut -d'"' -f4)
 	fi
 
-	# Strip leading 'v' from tag (v0.12.1 → 0.12.1)
 	local version="${tag#v}"
-
 	if [[ -n "$version" ]]; then
 		printf '%s\n%s\n' "$now" "$version" >"$LAST_CHECK_FILE"
 		echo "$version"
 	elif [[ -f "$VERSION_FILE" ]]; then
-		# Can't reach GitHub — use whatever we have installed
 		cut -d: -f1 "$VERSION_FILE"
 	else
 		echo ""
@@ -95,8 +87,7 @@ get_latest_version() {
 RIPVEC_VERSION=$(get_latest_version)
 
 if [[ -z "$RIPVEC_VERSION" ]]; then
-	echo "Cannot determine ripvec version (no network, no cached binary)." >&2
-	echo "Install manually: cargo install ripvec-mcp" >&2
+	echo "Cannot determine ripvec version." >&2
 	exit 1
 fi
 
@@ -108,12 +99,12 @@ if [[ -x "$BINARY" ]] && [[ -f "$VERSION_FILE" ]] && [[ "$(cat "$VERSION_FILE")"
 	exec "$BINARY" "$@"
 fi
 
+# Download
 ARCHIVE="ripvec-v${RIPVEC_VERSION}-${TARGET}.tar.gz"
 URL="https://github.com/${REPO}/releases/download/v${RIPVEC_VERSION}/${ARCHIVE}"
 
 echo "ripvec-mcp v${RIPVEC_VERSION} — downloading for ${TARGET}..." >&2
 
-# Download and extract
 TMPDIR="$(mktemp -d)"
 trap 'rm -rf "$TMPDIR"' EXIT
 
@@ -122,31 +113,19 @@ if command -v curl &>/dev/null; then
 elif command -v wget &>/dev/null; then
 	wget -q "$URL" -O "${TMPDIR}/${ARCHIVE}"
 else
-	echo "Neither curl nor wget found. Install manually: cargo install ripvec-mcp" >&2
+	echo "No curl/wget. Install: cargo binstall ripvec-mcp" >&2
 	exit 1
 fi
 
 tar xzf "${TMPDIR}/${ARCHIVE}" -C "$TMPDIR"
-
-# Extract binaries from the archive (archive contains ripvec-v{version}-{target}/)
 EXTRACT_DIR="${TMPDIR}/ripvec-v${RIPVEC_VERSION}-${TARGET}"
 
-# Install ripvec-mcp (required) and ripvec CLI (optional, nice to have)
 cp "${EXTRACT_DIR}/ripvec-mcp" "$BINARY"
 chmod +x "$BINARY"
+[[ -f "${EXTRACT_DIR}/ripvec" ]] && cp "${EXTRACT_DIR}/ripvec" "${BIN_DIR}/ripvec" && chmod +x "${BIN_DIR}/ripvec"
 
-if [[ -f "${EXTRACT_DIR}/ripvec" ]]; then
-	cp "${EXTRACT_DIR}/ripvec" "${BIN_DIR}/ripvec"
-	chmod +x "${BIN_DIR}/ripvec"
-fi
-
-# Record version for fast-path check
 echo "${RIPVEC_VERSION}:${TARGET}" >"$VERSION_FILE"
+echo "ripvec-mcp v${RIPVEC_VERSION} installed." >&2
 
-echo "ripvec-mcp v${RIPVEC_VERSION} installed to ${BIN_DIR}" >&2
-
-# --install-only: exit after download (used by .mcp.json inline command)
 if [[ "${1:-}" == "--install-only" ]]; then exit 0; fi
-
-# Exec into the binary — replaces this shell process (used by .lsp.json)
 exec "$BINARY" "$@"
