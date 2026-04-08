@@ -1,101 +1,75 @@
 ---
 name: semantic-discovery
-description: "Use when searching for code by concept or behavior rather than exact text. Triggers on: 'find the code that handles X', 'where is Y implemented', 'how does Z work', 'find functions related to', 'search for the retry logic', 'where do we handle errors', 'find the authentication flow'. Use instead of Grep when the user describes WHAT the code does rather than WHAT it says."
+description: "Use when searching for code by concept, behavior, or intent — when the file and function name are unknown. Triggers on: 'find the code that handles X', 'where is Y implemented', 'how does Z work', 'find authentication logic', 'search for retry handling'. Use instead of Grep when describing WHAT code does rather than WHAT it says."
 ---
 
-# Semantic Code Discovery
+# Semantic Discovery: Concept → Code → Navigate
 
-When someone asks "find the code that handles database connection pooling" — they don't mean grep for "connection pooling". They mean: find the actual implementation, wherever it lives, whatever it's called.
+Find code by meaning, then navigate into it with LSP.
 
-## Tool discovery and readiness
+## Tool discovery
 
-ripvec's MCP tools are deferred — use `ToolSearch` to load them before calling:
+MCP tools are deferred. Load before calling:
 ```
-ToolSearch("select:mcp__ripvec__search_code,mcp__ripvec__search_text,mcp__ripvec__find_similar,mcp__ripvec__index_status")
+ToolSearch("select:mcp__ripvec__search_code,mcp__ripvec__get_repo_map,mcp__ripvec__find_similar,mcp__ripvec__index_status")
 ```
-If running as a plugin, tools may be namespaced as `mcp__plugin_ripvec_ripvec__*` — search for `ripvec` to find them.
+Plugin namespace: `mcp__plugin_ripvec_ripvec__*`. Call `index_status` first — wait if indexing.
 
-**Check index readiness first.** Call `index_status` before searching. If it returns `"indexing": true`, the response includes phase, percentage, and ETA (e.g., "embedding 1200/2383 files (50%, ~16s remaining)"). Wait for indexing to complete — results will be incomplete or empty while building. For small repos this takes 1-3 seconds; for large repos up to 30 seconds.
+## When to use
 
-## The decision: Grep vs search_code vs LSP
+- Describing behavior: "find the retry logic" → `search_code`
+- Naming a symbol: "find useAuth hook" → `search_code` or LSP `workspaceSymbol`
+- Exact text: "find all TODOs" → Grep (not this skill)
 
-| User says | Tool | Why |
-|---|---|---|
-| "Find `TODO` comments" | Grep | Exact text match |
-| "Find the retry logic" | search_code | Conceptual — code may use `backoff`, `attempt`, `loop` |
-| "Find `useAuth` hook" | LSP workspaceSymbol or Grep | Known symbol name |
-| "Find authentication handling" | search_code | Could be middleware, decorator, guard, hook |
-| "Find `SELECT * FROM users`" | Grep | Exact SQL |
-| "Find queries that join users and orders" | search_code | Semantic join pattern |
-| "What calls this function?" | LSP incomingCalls | Precise call graph from ripvec's def-level PageRank |
-| "Go to definition of X" | LSP goToDefinition | Precise navigation via ripvec |
+## The pattern
 
-**Rule of thumb**: If the user describes BEHAVIOR, use search_code. If they name a SYMBOL, use LSP or Grep.
-
-## How to search effectively
-
-**Natural language queries work best:**
 ```
-search_code("retry logic with exponential backoff")
-search_code("WebSocket connection lifecycle management")
-search_code("database migration rollback handling")
-search_code("rate limiting middleware for API endpoints")
+search_code("concept")          → candidates with file:line
+LSP documentSymbol(file)        → full outline of the best match
+LSP goToDefinition(position)    → jump to the definition
+LSP hover(position)             → see scope chain + context
+LSP findReferences(position)    → all usage sites
 ```
 
-**Results are ranked by function-level PageRank** — structurally important functions (called by many others) rank higher than isolated helpers. This means search results naturally surface the architecturally significant implementations first.
+### Step 1: Search by meaning
 
-**Results include full source code** in fenced blocks with language annotation. Review the code directly — don't call `Read` on the same file unless you need more context.
-
-**Chain with ripvec's LSP for precision:**
-1. `search_code("trait that all backends implement")` → finds `EmbedBackend` in `mod.rs`
-2. LSP `findReferences` on `EmbedBackend` → shows all implementations
-3. LSP `incomingCalls` on a specific method → traces the call chain
-4. LSP `hover` → see the scope context and signature
-
-ripvec's LSP works for all 21 supported languages — including bash, HCL, TOML, Ruby, Kotlin, Swift, Scala — without needing any other language server installed.
-
-## Examples across languages
-
-**Rust**: "Find where we handle the case when the GPU runs out of memory"
 ```
-search_code("GPU out of memory error handling")
+search_code("authentication middleware that validates JWT tokens")
 ```
-→ Finds the error variants and recovery paths, even if the code uses `crate::Error::Metal(...)` not "out of memory"
 
-**TypeScript/React**: "Find components that do client-side form validation"
-```
-search_code("form validation with error messages")
-```
-→ Finds validation hooks, Zod schemas, form error state management
+Results are ranked by relevance × structural importance (function-level PageRank).
+Functions that many others depend on rank higher.
 
-**Python/FastAPI**: "Find the endpoint that processes webhook callbacks"
-```
-search_code("webhook callback processing endpoint")
-```
-→ Finds the route handler regardless of whether it's called `webhook_handler`, `process_callback`, or `handle_event`
+### Step 2: Examine the best match
 
-**Terraform**: "Find the S3 bucket with versioning enabled"
 ```
-search_code("S3 bucket versioning configuration")
+LSP documentSymbol(file: "auth/middleware.rs")
 ```
-→ Finds the resource block. ripvec's LSP provides `documentSymbol` for HCL — no other LSP does this.
 
-**Go**: "Find the goroutine that watches for config file changes"
+Shows every function, struct, field, constant in the file. Decide which symbol
+to investigate. ripvec's LSP covers all 19 supported languages — bash, HCL,
+TOML, Ruby, Kotlin, Swift, Scala, JSON, YAML, Markdown included.
+
+### Step 3: Navigate deeper
+
 ```
-search_code("file watcher goroutine config reload")
+LSP goToDefinition(file, line, char)  → jump to where a called function lives
+LSP incomingCalls(file, line, char)   → who calls this function
+LSP outgoingCalls(file, line, char)   → what this function calls
+find_similar(file, line)              → parallel implementations elsewhere
 ```
-→ Finds the fsnotify watcher setup and reload handler
 
-## Combining search with structure
+## Grep vs search_code
 
-When search_code returns results from many files:
-1. Run `get_repo_map` to understand which files are central
-2. Results from high-PageRank functions are already boosted — they're architecturally important
-3. Use LSP `outgoingCalls` to trace what a found function depends on
-4. Results from test files or example files are supporting context, not primary
+| User describes | Tool |
+|----------------|------|
+| Behavior ("retry with backoff") | `search_code` |
+| Symbol name ("ConnectionPool") | `search_code` or LSP `workspaceSymbol` |
+| Exact string ("TODO: fix") | Grep |
+| Pattern/regex | Grep |
 
-## search_text vs search_code
+## Don't
 
-- `search_code` — optimized for source code semantics
-- `search_text` — optimized for documentation, READMEs, comments
-- When unsure, try `search_code` first
+- Use Grep for conceptual queries
+- Read files sequentially hoping to find something
+- Skip `index_status` check (empty results during indexing)

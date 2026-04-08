@@ -1,96 +1,97 @@
 ---
 name: change-impact
-description: "Use before making significant code changes to understand the blast radius. Triggers on: 'what depends on this', 'what will break if I change', 'show me the impact', 'refactor this safely', 'what uses this module', 'find all callers', 'assess the blast radius'. Use when planning refactors, API changes, module moves, or any change to code that others depend on."
+description: "Use when starting from a known piece of code and exploring outward — understanding dependencies, finding similar code, assessing blast radius, tracing call chains. Triggers on: 'what depends on this', 'what breaks if I change this', 'find all callers', 'what's connected to this function', 'find similar implementations', 'trace the flow', 'assess blast radius'."
 ---
 
-# Change Impact Analysis
+# Change Impact: Code → Context → Connections
 
-Before changing a function signature, moving a module, or refactoring an API — understand what depends on it. ripvec provides the full blast radius through its MCP tools and LSP operations.
+Start at a known location. Explore outward with LSP, then search for patterns.
 
-## Tool discovery and readiness
+## Tool discovery
 
-ripvec's MCP tools are deferred — use `ToolSearch` to load them before calling:
+MCP tools are deferred. Load before calling:
 ```
-ToolSearch("select:mcp__ripvec__get_repo_map,mcp__ripvec__search_code,mcp__ripvec__find_similar,mcp__ripvec__index_status")
+ToolSearch("select:mcp__ripvec__get_repo_map,mcp__ripvec__search_code,mcp__ripvec__find_similar,mcp__ripvec__find_duplicates,mcp__ripvec__index_status")
 ```
-If running as a plugin, tools may be namespaced as `mcp__plugin_ripvec_ripvec__*` — search for `ripvec` to find them.
+Plugin namespace: `mcp__plugin_ripvec_ripvec__*`. Call `index_status` first — wait if indexing.
 
-**Check index readiness first.** Call `index_status` before searching. If it returns `"indexing": true`, the response includes phase, percentage, and ETA (e.g., "embedding 1200/2383 files (50%, ~16s remaining)"). Wait for indexing to complete — results will be incomplete or empty while building. For small repos this takes 1-3 seconds; for large repos up to 30 seconds.
+## When to use
 
-## The three-tool pattern
+- "What calls this function?" → LSP `incomingCalls`
+- "What does this function call?" → LSP `outgoingCalls`
+- "Find all uses of this struct" → LSP `findReferences`
+- "Find code similar to this" → `find_similar`
+- "What's the blast radius of changing this?" → this full workflow
+- "Are there duplicates of this?" → `find_duplicates`
 
-**1. Structural dependencies** — what files and functions depend on what you're changing:
+## The pattern
+
 ```
-get_repo_map(focus_file: "src/backend/mod.rs", max_tokens: 1500)
-```
-Shows callers and callees at the function level — which specific functions call into this module, not just which files import it.
-
-**2. Call hierarchy** — exact callers and callees for the specific function:
-
-ripvec's LSP provides function-level call hierarchy for all 21 supported languages:
-```
-LSP incomingCalls on the function you're changing → every function that calls it
-LSP outgoingCalls on the function → everything it depends on
-```
-This uses ripvec's definition-level call graph — backed by per-function PageRank, not just text matching.
-
-**3. Symbol references + similar code**:
-```
-LSP findReferences on the function/trait/struct → every usage site
-find_similar(file: "src/backend/metal.rs", line: 42) → parallel implementations
+LSP documentSymbol(file)           → see what's in the file
+LSP incomingCalls(function)        → who depends on this
+LSP outgoingCalls(function)        → what this depends on
+get_repo_map(focus_file: file)     → structural neighborhood
+find_similar(file, line)           → parallel implementations
+find_duplicates(threshold: 0.85)   → codebase-wide near-copies
 ```
 
-## Examples
+### Step 1: Understand the local structure
 
-### Changing a trait method signature (Rust)
+```
+LSP documentSymbol(file: "src/auth/middleware.rs")
+```
 
-You want to add a parameter to `EmbedBackend::embed_batch`:
+See every function, field, constant. Identify the function being changed.
 
-1. `get_repo_map(focus_file: "src/backend/mod.rs")` → shows 6 files depend on this trait
-2. LSP `incomingCalls` on `embed_batch` → shows every function that calls it
-3. LSP `findReferences` on `embed_batch` → every usage site including trait bounds
-4. `find_similar` on the Metal impl → shows CPU, CUDA impls that all need updating
+### Step 2: Trace the call graph
 
-**Blast radius**: 6 files, ~15 call sites, 3 trait implementations.
+```
+LSP incomingCalls(file, line, char)   → every function that calls this
+LSP outgoingCalls(file, line, char)   → every function this calls
+```
 
-### Changing a Terraform resource
+These use ripvec's function-level call graph — backed by PageRank, not
+just text matching. Available for all 19 supported languages.
 
-You want to modify an S3 bucket configuration:
+### Step 3: See the structural neighborhood
 
-1. `get_repo_map(focus_file: "modules/storage/main.tf")` → shows which modules reference this
-2. LSP `documentSymbol` → lists all resources, data sources, variables in the file (ripvec is the only LSP that provides this for HCL)
-3. `search_code("reference to storage module bucket")` → finds all consumers
+```
+get_repo_map(focus_file: "src/auth/middleware.rs", max_tokens: 1500)
+```
 
-### Renaming a REST endpoint (TypeScript)
+Topic-sensitive PageRank concentrates on the focus file's callers and
+callees. Shows which other files are structurally connected.
 
-You want to rename `/api/users` to `/api/v2/users`:
+### Step 4: Find parallel implementations
 
-1. `get_repo_map(focus_file: "src/routes/users.ts")` → shows which middleware, controllers, and test files connect
-2. `search_code("api/users endpoint")` → finds frontend fetch calls, API client wrappers, integration tests
-3. LSP `findReferences` on the route handler → exact server-side references
+```
+find_similar(file: "src/auth/middleware.rs", line: 42, top_k: 10)
+```
 
-### Moving a Python module
+Finds code with similar embeddings — different implementations of the
+same pattern. If changing a function signature, these likely need the
+same change.
 
-You want to move `utils/auth.py` to `middleware/auth.py`:
+### Step 5: Check for duplicates
 
-1. `get_repo_map(focus_file: "utils/auth.py")` → shows every file that imports from it
-2. LSP `incomingCalls` → which functions actually call the auth functions
-3. `search_code("authentication decorator usage")` → finds indirect usage through decorators
+```
+find_duplicates(threshold: 0.90)
+```
 
-## The safety checklist
+Near-exact copies (>0.90) are likely copy-paste that should be refactored.
+Similar patterns (0.85-0.90) may need coordinated changes.
 
-Before any structural change:
-- [ ] `get_repo_map(focus_file)` — identify all dependent files and functions
-- [ ] LSP `incomingCalls` — exact callers of the function you're changing
-- [ ] LSP `findReferences` — all usage sites (including type annotations, not just calls)
-- [ ] `find_similar` — identify parallel implementations needing the same change
+## Safety checklist before a structural change
+
+- [ ] `LSP incomingCalls` — identify all direct callers
+- [ ] `LSP findReferences` — all usage sites (including type annotations)
+- [ ] `find_similar` — parallel implementations needing the same change
+- [ ] `get_repo_map(focus_file)` — structural neighborhood
 - [ ] Run tests on the dependency neighborhood, not just the changed file
 
-## When this skill helps most
+## Don't
 
-- Changing public APIs (trait methods, exported functions, REST endpoints)
-- Moving or renaming modules/files
-- Refactoring shared utilities
-- Updating database schemas that models depend on
-- Modifying interfaces between frontend and backend
-- Changing Terraform module interfaces
+- Change a function signature without checking `incomingCalls` first
+- Assume only one file is affected
+- Skip `find_similar` — copy-paste code is everywhere
+- Use Grep to find "who uses this" — use LSP `findReferences`
