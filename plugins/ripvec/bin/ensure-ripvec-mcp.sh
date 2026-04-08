@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-RIPVEC_VERSION="0.12.0"
+RIPVEC_VERSION="0.12.1"
 REPO="fnordpig/ripvec"
 
 # Resolve plugin root (handles both ${CLAUDE_PLUGIN_ROOT} and script-relative)
