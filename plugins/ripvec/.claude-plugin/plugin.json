@@ -1,7 +1,7 @@
 {
   "name": "ripvec",
-  "version": "0.12.1",
-  "description": "Semantic code search + multi-language LSP — find code by meaning, navigate with function-level PageRank, get syntax diagnostics across 21 languages. GPU-accelerated (Metal/CUDA).",
+  "version": "0.13.0",
+  "description": "Semantic code search + generic multi-language LSP. 19 grammars, 30 extensions, function-level PageRank, hybrid BM25+vector ranking, GPU-accelerated (Metal/CUDA).",
   "author": {
     "name": "Robert Waugh",
     "url": "https://github.com/fnordpig"
