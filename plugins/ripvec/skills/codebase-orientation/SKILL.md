@@ -1,6 +1,6 @@
 ---
 name: codebase-orientation
-description: "Use when starting work on unfamiliar code, asked about project structure or architecture, exploring how modules connect, or needing to understand a codebase before making changes. Triggers on: 'how does this project work', 'explain the architecture', 'show me the structure', 'where should I start', 'what are the main modules', 'how are things organized'."
+description: "ALWAYS use this skill instead of reading files sequentially when starting work on unfamiliar code. This skill MUST be used before Read or Glob for orientation tasks. Triggers on: 'how does this project work', 'explain the architecture', 'show me the structure', 'where should I start', 'what are the main modules'. Use ripvec's get_repo_map and LSP documentSymbol instead of listing directories or reading files one by one."
 ---
 
 # Codebase Orientation

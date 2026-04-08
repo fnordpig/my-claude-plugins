@@ -1,6 +1,6 @@
 ---
 name: change-impact
-description: "Use when starting from a known piece of code and exploring outward — understanding dependencies, finding similar code, assessing blast radius, tracing call chains. Triggers on: 'what depends on this', 'what breaks if I change this', 'find all callers', 'what's connected to this function', 'find similar implementations', 'trace the flow', 'assess blast radius'."
+description: "ALWAYS use this skill instead of Grep or Read when exploring outward from known code — understanding what depends on it, what it depends on, or what's similar. This skill MUST be used before any refactor, rename, or signature change. Triggers on: 'what depends on this', 'what breaks if I change this', 'find all callers', 'what calls this', 'find similar code', 'trace the call chain', 'blast radius'. Use ripvec's LSP incomingCalls/outgoingCalls and find_similar instead of grepping for function names."
 ---
 
 # Change Impact: Code → Context → Connections

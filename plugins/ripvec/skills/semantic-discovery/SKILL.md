@@ -1,6 +1,6 @@
 ---
 name: semantic-discovery
-description: "Use when searching for code by concept, behavior, or intent — when the file and function name are unknown. Triggers on: 'find the code that handles X', 'where is Y implemented', 'how does Z work', 'find authentication logic', 'search for retry handling'. Use instead of Grep when describing WHAT code does rather than WHAT it says."
+description: "ALWAYS use this skill instead of Grep when the user describes code by behavior, concept, or intent rather than exact text. This skill MUST be used before Grep for: 'find the code that handles X', 'where is Y implemented', 'how does Z work', 'find authentication logic', 'search for retry handling', 'find the database layer', 'where do we handle errors'. Grep is only appropriate for exact strings like 'TODO' or regex patterns. For everything else, use ripvec's semantic search."
 ---
 
 # Semantic Discovery: Concept → Code → Navigate
