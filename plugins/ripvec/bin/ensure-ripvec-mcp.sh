@@ -8,7 +8,6 @@
 set -euo pipefail
 
 REPO="fnordpig/ripvec"
-CHECK_INTERVAL=86400 # 1 day
 
 # Binary cache goes in PLUGIN_DATA (survives plugin updates)
 # Fall back to PLUGIN_ROOT/bin if DATA isn't available
@@ -23,7 +22,6 @@ fi
 
 BINARY="${BIN_DIR}/ripvec-mcp"
 VERSION_FILE="${BIN_DIR}/.version"
-LAST_CHECK_FILE="${BIN_DIR}/.last-check"
 
 # Detect platform
 OS="$(uname -s)"
@@ -62,21 +60,8 @@ if [[ "${1:-}" == "--install-only" ]]; then
 	shift
 fi
 
-# Fetch latest version (cached for CHECK_INTERVAL)
+# Fetch latest version from GitHub API (~200ms, no cache)
 get_latest_version() {
-	local now
-	now=$(date +%s)
-
-	if [[ -f "$LAST_CHECK_FILE" ]]; then
-		local last_check cached_version
-		last_check=$(head -1 "$LAST_CHECK_FILE")
-		cached_version=$(tail -1 "$LAST_CHECK_FILE")
-		if ((now - last_check < CHECK_INTERVAL)) && [[ -n "$cached_version" ]]; then
-			echo "$cached_version"
-			return
-		fi
-	fi
-
 	local tag=""
 	if command -v curl &>/dev/null; then
 		tag=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null |
@@ -88,9 +73,9 @@ get_latest_version() {
 
 	local version="${tag#v}"
 	if [[ -n "$version" ]]; then
-		printf '%s\n%s\n' "$now" "$version" >"$LAST_CHECK_FILE"
 		echo "$version"
 	elif [[ -f "$VERSION_FILE" ]]; then
+		# Offline fallback: use whatever is installed
 		cut -d: -f1 "$VERSION_FILE"
 	else
 		echo ""
