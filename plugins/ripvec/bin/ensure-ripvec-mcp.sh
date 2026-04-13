@@ -9,16 +9,13 @@ set -euo pipefail
 
 REPO="fnordpig/ripvec"
 
-# Binary cache goes in PLUGIN_DATA (survives plugin updates)
-# Fall back to PLUGIN_ROOT/bin if DATA isn't available
-# Cache binary in a stable location that survives plugin updates.
-# Preferred: XDG_CACHE_HOME or ~/.cache. Fallback: CLAUDE_PLUGIN_DATA, then CLAUDE_PLUGIN_ROOT, then script dir.
-if [[ -n "${XDG_CACHE_HOME:-}" ]]; then
-	BIN_DIR="${XDG_CACHE_HOME}/ripvec/bin"
+# Cache binary in CLAUDE_PLUGIN_DATA (persists across plugin version updates).
+# Claude Code sets this to ~/.claude/plugins/data/<plugin>-<marketplace>/.
+# Fallback chain: ~/.cache/ripvec → CLAUDE_PLUGIN_ROOT → script dir.
+if [[ -n "${CLAUDE_PLUGIN_DATA:-}" ]]; then
+	BIN_DIR="${CLAUDE_PLUGIN_DATA}/bin"
 elif [[ -n "${HOME:-}" ]]; then
 	BIN_DIR="${HOME}/.cache/ripvec/bin"
-elif [[ -n "${CLAUDE_PLUGIN_DATA:-}" ]]; then
-	BIN_DIR="${CLAUDE_PLUGIN_DATA}/bin"
 elif [[ -n "${CLAUDE_PLUGIN_ROOT:-}" ]]; then
 	BIN_DIR="${CLAUDE_PLUGIN_ROOT}/bin"
 else
