@@ -141,5 +141,34 @@ fi
 echo "${RIPVEC_VERSION}:${TARGET}" >"$VERSION_FILE"
 echo "ripvec-mcp v${RIPVEC_VERSION} installed." >&2
 
+# Preflight: surface silent-launch failures (missing shared libs, glibc
+# mismatch, CUDA runtime absent) before Claude Code sees "connection closed"
+# with zero stderr and reports "Failed to reconnect".
+if [[ "$OS" == "Linux" ]] && command -v timeout &>/dev/null; then
+	PREFLIGHT=$(timeout 2 "$BINARY" </dev/null 2>&1 >/dev/null || true)
+	# Filter out the benign MCP-serve error that fires when stdin is /dev/null;
+	# anything else (linker errors, glibc mismatches, CUDA load failures) is
+	# a real launch problem.
+	REAL_ERR=$(echo "$PREFLIGHT" | grep -v -iE 'MCP serve|connection closed' || true)
+	if [[ -n "$REAL_ERR" ]]; then
+		echo "ripvec-mcp preflight failed:" >&2
+		echo "$REAL_ERR" >&2
+		if echo "$REAL_ERR" | grep -qiE 'libcud|libnvrtc|libcublas'; then
+			echo "" >&2
+			echo "Hint: CUDA runtime not found. Set RIPVEC_CUDA=0 for the CPU-only build." >&2
+		fi
+		if echo "$REAL_ERR" | grep -qiE 'libopenblas|libblas'; then
+			echo "" >&2
+			echo "Hint: install OpenBLAS — sudo apt-get install libopenblas0 (or equivalent)" >&2
+		fi
+		if echo "$REAL_ERR" | grep -qiE 'GLIBC_[0-9.]+.*not found'; then
+			echo "" >&2
+			echo "Hint: release binaries are built against glibc from ubuntu-latest." >&2
+			echo "Older distros may need to build from source: cargo install ripvec-mcp" >&2
+		fi
+		exit 1
+	fi
+fi
+
 $INSTALL_ONLY && exit 0
 exec "$BINARY" "$@"
