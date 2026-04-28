@@ -1,7 +1,7 @@
 {
   "name": "ripvec",
-  "version": "0.13.18",
-  "description": "Semantic code search + generic multi-language LSP. 19 grammars, 30 extensions, function-level PageRank, hybrid BM25+vector ranking, GPU-accelerated (Metal/CUDA).",
+  "version": "0.13.20",
+  "description": "Semantic code search + generic multi-language LSP. 20 grammars, 37 extensions, live indexing dashboard, RDF/OWL chunking, function-level PageRank, hybrid BM25+vector ranking, GPU-accelerated (Metal/CUDA).",
   "author": {
     "name": "Robert Waugh",
     "url": "https://github.com/fnordpig"
