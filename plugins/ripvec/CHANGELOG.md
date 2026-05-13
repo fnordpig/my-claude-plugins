@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.26 (2026-05-13)
+
+### Fixed
+- Release includes the live 3D atlas rotation fix so the index dashboard keeps
+  rotating after indexing completes.
+
 ## 0.13.25 (2026-05-13)
 
 ### Added
