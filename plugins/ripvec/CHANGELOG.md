@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.13.24 (2026-05-13)
+
+### Added
+- ripvec can now exclude indexed files with `--exclude-extensions=jsonl,md`
+  and repo-local `.ripvec/config.toml` `[ignore]` patterns using
+  `.gitignore` syntax.
+
 ## 0.13.18 (2026-04-25)
 
 ### Fixed
