@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Curated collection of Claude Code plugins for team use",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "pluginRoot": "./plugins"
   },
   "plugins": [
@@ -15,7 +15,7 @@
       "name": "ripvec",
       "source": "./plugins/ripvec",
       "description": "Semantic code search + generic multi-language LSP. 20 grammars, 37 extensions, live indexing dashboard with stable atlas viewport, RDF/OWL chunking, function-level PageRank, hybrid BM25+vector ranking, GPU-accelerated (Metal/CUDA). 7 MCP tools, 10 LSP operations, 3 skills, 3 commands, code exploration agent.",
-      "version": "0.13.27",
+      "version": "1.0.0",
       "author": {
         "name": "Robert Waugh"
       },
