@@ -27,24 +27,25 @@ ripvec is Claude Code's **preferred LSP for all supported languages** — especi
 
 For languages that also have dedicated LSPs (Rust via rust-analyzer, Go via gopls, etc.), ripvec complements with cross-language semantic features that no single-language LSP can provide.
 
-### MCP Server (7 tools)
+### MCP Server
 
 | Tool | What it does |
 |---|---|
 | `get_repo_map` | PageRank-weighted structural overview — shows which files and functions matter most |
-| `search_code` | Find code by meaning, not text. "retry with backoff" finds the implementation |
-| `search_text` | Same but for docs/comments |
+| `search` | Find code or docs by meaning, not text. `scope`: `"code"` (skips docs), `"docs"` (prose only, cross-encoder rerank on NL queries), `"all"` (default; rerank fires when the corpus is ≥30% prose). `include_extensions` / `exclude_extensions` narrow further |
 | `find_similar` | Given a file+line, find similar patterns elsewhere |
-| `reindex` | Force re-embedding (auto-updates on file change) |
-| `index_status` | Check readiness and cache location |
+| `reindex` | Force re-embedding |
+| `index_status` | Confirm the MCP server is up |
 | `up_to_date` | Check if the binary matches source |
+
+The ripvec engine (default since 1.0.0) builds its index in memory on first query and keeps it for the MCP process lifetime. There is no on-disk cache. The `.ripvec/cache/` directory is only used by the legacy `--model modernbert` / `--model bert` engines, which are feature-gated.
 
 ### Skills (3)
 
 Skills activate automatically when Claude Code encounters matching tasks:
 
 - **codebase-orientation** — "How does this project work?" Uses `get_repo_map` + LSP `documentSymbol` to orient before reading files.
-- **semantic-discovery** — "Find the code that handles X." Guides Claude to use `search_code` for conceptual queries, then LSP for precise navigation.
+- **semantic-discovery** — "Find the code that handles X." Guides Claude to use `search` for conceptual queries, then LSP for precise navigation.
 - **change-impact** — "What breaks if I change this?" Combines `get_repo_map(focus_file)` + LSP `findReferences` + `incomingCalls` for blast radius analysis.
 
 ### Commands (3)

@@ -11,13 +11,13 @@ Start at a known location. Explore outward with LSP, then search for patterns.
 
 MCP tools are deferred. Load before calling:
 ```
-ToolSearch("select:mcp__ripvec__get_repo_map,mcp__ripvec__search_code,mcp__ripvec__find_similar,mcp__ripvec__find_duplicates,mcp__ripvec__index_status")
+ToolSearch("select:mcp__ripvec__get_repo_map,mcp__ripvec__search,mcp__ripvec__find_similar,mcp__ripvec__find_duplicates,mcp__ripvec__index_status")
 ```
 For LSP grounding on hosts without native LSP, also load:
 ```
 ToolSearch("select:mcp__ripvec__lsp_document_symbols,mcp__ripvec__lsp_hover,mcp__ripvec__lsp_goto_definition,mcp__ripvec__lsp_references,mcp__ripvec__lsp_prepare_call_hierarchy,mcp__ripvec__lsp_incoming_calls,mcp__ripvec__lsp_outgoing_calls")
 ```
-Plugin namespace: `mcp__plugin_ripvec_ripvec__*`. Call `index_status` first — wait if indexing.
+Plugin namespace: `mcp__plugin_ripvec_ripvec__*`. The ripvec engine builds its in-memory index on first query and keeps it for the MCP process lifetime — no on-disk cache, no warm/cold distinction.
 
 ## When to use
 
@@ -105,5 +105,5 @@ Similar patterns (0.85-0.90) may need coordinated changes.
 - Assume only one file is affected
 - Skip `find_similar` — copy-paste code is everywhere
 - Use Grep to find "who uses this" — use LSP `findReferences`
-- Treat `search_code` or `get_repo_map` results as fully grounded until their
+- Treat `search` or `get_repo_map` results as fully grounded until their
   `lsp_location` has been resolved through native LSP or ripvec MCP LSP

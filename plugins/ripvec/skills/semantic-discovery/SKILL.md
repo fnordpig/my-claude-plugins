@@ -11,35 +11,44 @@ Find code by meaning, then navigate into it with LSP.
 
 MCP tools are deferred. Load before calling:
 ```
-ToolSearch("select:mcp__ripvec__search_code,mcp__ripvec__get_repo_map,mcp__ripvec__find_similar,mcp__ripvec__index_status")
+ToolSearch("select:mcp__ripvec__search,mcp__ripvec__get_repo_map,mcp__ripvec__find_similar,mcp__ripvec__index_status")
 ```
 For grounding, also load the LSP-shaped MCP tools when native LSP is absent:
 ```
 ToolSearch("select:mcp__ripvec__lsp_document_symbols,mcp__ripvec__lsp_workspace_symbols,mcp__ripvec__lsp_hover,mcp__ripvec__lsp_goto_definition,mcp__ripvec__lsp_references,mcp__ripvec__lsp_prepare_call_hierarchy,mcp__ripvec__lsp_incoming_calls,mcp__ripvec__lsp_outgoing_calls")
 ```
-Plugin namespace: `mcp__plugin_ripvec_ripvec__*`. Call `index_status` first — wait if indexing.
+Plugin namespace: `mcp__plugin_ripvec_ripvec__*`. The ripvec engine builds its in-memory index on first query and keeps it for the MCP process lifetime — no on-disk cache, no warm/cold distinction.
 
 ## When to use
 
-- Describing behavior: "find the retry logic" → `search_code`
-- Naming a symbol: "find useAuth hook" → `search_code` or LSP `workspaceSymbol`
+- Describing behavior: "find the retry logic" → `search(query: ..., scope: "code")`
+- "what does the documentation say about X" → `search(query: ..., scope: "docs")`
+- Anywhere in the repo: `search(query: ...)` (scope defaults to `"all"`)
+- Naming a symbol: "find useAuth hook" → `search` or LSP `workspaceSymbol`
 - Exact text: "find all TODOs" → Grep (not this skill)
+
+`scope` controls extension filtering and reranking:
+- `"code"` skips docs and disables the cross-encoder rerank
+- `"docs"` keeps only prose; cross-encoder reranks NL queries
+- `"all"` applies no extension filter; rerank fires when the corpus is ≥30% prose
+
+Use `include_extensions` / `exclude_extensions` to narrow further.
 
 ## The pattern
 
 ```
-search_code("concept")          → candidates with file:line
-ground results[].lsp_location   → native LSP or ripvec MCP LSP
-document symbols(file)          → full outline of the best match
-go to definition(position)      → jump to the definition
-hover(position)                 → see scope chain + context
-references(position)            → all usage sites
+search("concept", scope: "code") → candidates with file:line
+ground results[].lsp_location    → native LSP or ripvec MCP LSP
+document symbols(file)           → full outline of the best match
+go to definition(position)       → jump to the definition
+hover(position)                  → see scope chain + context
+references(position)             → all usage sites
 ```
 
 ### Step 1: Search by meaning
 
 ```
-search_code("authentication middleware that validates JWT tokens")
+search(query: "authentication middleware that validates JWT tokens", scope: "code")
 ```
 
 Results are ranked by relevance × structural importance (function-level PageRank).
@@ -86,12 +95,14 @@ Native LSP and ripvec MCP LSP are interchangeable at this layer. Use whichever
 the host exposes, but preserve the grounding loop: semantic discovery →
 `lsp_location` → LSP resolution → edit/read only after the symbol is grounded.
 
-## Grep vs search_code
+## Grep vs search
 
 | User describes | Tool |
 |----------------|------|
-| Behavior ("retry with backoff") | `search_code` |
-| Symbol name ("ConnectionPool") | `search_code` or LSP `workspaceSymbol` |
+| Behavior ("retry with backoff") | `search(query: ..., scope: "code")` |
+| Documentation ("how is X documented") | `search(query: ..., scope: "docs")` |
+| Anywhere in the repo | `search(query: ...)` (scope defaults to `"all"`) |
+| Symbol name ("ConnectionPool") | `search` or LSP `workspaceSymbol` |
 | Exact string ("TODO: fix") | Grep |
 | Pattern/regex | Grep |
 
@@ -99,6 +110,5 @@ the host exposes, but preserve the grounding loop: semantic discovery →
 
 - Use Grep for conceptual queries
 - Read files sequentially hoping to find something
-- Skip `index_status` check (empty results during indexing)
 - Edit based only on vector similarity without grounding through native LSP or
   ripvec MCP LSP

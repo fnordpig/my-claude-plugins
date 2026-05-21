@@ -11,7 +11,7 @@ When you need to understand how a project is structured — which files are cent
 
 ripvec's MCP tools are deferred — use `ToolSearch` to load them before calling:
 ```
-ToolSearch("select:mcp__ripvec__get_repo_map,mcp__ripvec__search_code,mcp__ripvec__index_status")
+ToolSearch("select:mcp__ripvec__get_repo_map,mcp__ripvec__search,mcp__ripvec__index_status")
 ```
 When grounding repo-map entries on a host without native LSP, also load:
 ```
@@ -19,7 +19,7 @@ ToolSearch("select:mcp__ripvec__lsp_document_symbols,mcp__ripvec__lsp_workspace_
 ```
 If running as a plugin, tools may be namespaced as `mcp__plugin_ripvec_ripvec__*` — search for `ripvec` to find them.
 
-**Check index readiness first.** Call `index_status` before searching. If it returns `"indexing": true`, the response includes phase, percentage, and ETA (e.g., "embedding 1200/2383 files (50%, ~16s remaining)"). Wait for indexing to complete — results will be incomplete or empty while building. For small repos this takes 1-3 seconds; for large repos up to 30 seconds.
+**Session-scoped index.** The ripvec engine (default since 1.0.0) builds its in-memory index on first query against a root and keeps it for the MCP process lifetime. There is no on-disk cache, no manifest, no warm/cold distinction to worry about. Indexing is automatic and transparent. `.ripvec/cache/` is only used by the legacy `--model modernbert` / `--model bert` engines.
 
 ## Why this matters
 
@@ -46,9 +46,8 @@ Topic-sensitive PageRank concentrates on the focus file's neighborhood — what 
 
 **Step 3: Ground repo-map entries with LSP**
 
-`get_repo_map`, `search_code`, `search_text`, and `find_similar` return
-`lsp_location` data where possible. Use it to ground architectural guesses in
-symbol-aware navigation:
+`get_repo_map`, `search`, and `find_similar` return `lsp_location` data where
+possible. Use it to ground architectural guesses in symbol-aware navigation:
 
 - In Claude Code, pass the locations to native LSP operations:
   `documentSymbol`, `goToDefinition`, `hover`, `findReferences`, and call

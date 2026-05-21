@@ -7,9 +7,9 @@ arguments:
     required: true
 ---
 
-Call the `search_code` MCP tool with the user's query:
+Call the `search` MCP tool with the user's query, defaulting to code scope:
 ```
-search_code(query: "<query argument>", top_k: 5)
+search(query: "<query argument>", scope: "code", top_k: 5)
 ```
 
 Results include full source code in fenced blocks. Present the top results with:
@@ -19,5 +19,6 @@ Results include full source code in fenced blocks. Present the top results with:
 
 If results seem off-topic, suggest the user try:
 - More specific phrasing
-- `search_text` for documentation/comments instead of code
+- `search(query: ..., scope: "docs")` for documentation/comments
+- `search(query: ...)` with no `scope` to search everything (default `"all"`)
 - `Grep` if they're looking for an exact string
