@@ -14,8 +14,8 @@
     {
       "name": "ripvec",
       "source": "./plugins/ripvec",
-      "description": "Semantic code + document search. Static Model2Vec bi-encoder (potion-base-32M default) with path-enriched BM25, function-level PageRank, and L-12 cross-encoder rerank auto-gated by corpus class. Single `search` MCP tool with intent-shaped scope (code / docs / all) plus include/exclude extension filters. 20 tree-sitter grammars, 37 extensions, MCP + LSP server, GPU-accelerated transformer engines optional. Hits perfect NDCG@10 on prose; matches semble on Python within 0.008.",
-      "version": "2.0.0",
+      "description": "Semantic code + document search. Static Model2Vec bi-encoder (potion-base-32M default) with path-enriched BM25, function-level PageRank, and TinyBERT-L-2 cross-encoder rerank gated by corpus class. Single `search` MCP tool with intent-shaped scope (code / docs / all) plus include/exclude extension filters. Inverted BM25 postings, parallel BLAS sgemv, parallel repo-graph build. 20 tree-sitter grammars, 37 extensions, MCP + LSP server, GPU-accelerated transformer engines optional. Code: 42 ms p50 on a 1M-chunk corpus; prose: 34 ms p50 with NDCG@10 = 1.000 on a 15-query Gutenberg benchmark.",
+      "version": "2.1.0",
       "author": {
         "name": "Robert Waugh"
       },
