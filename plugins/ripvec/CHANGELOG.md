@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.0.3 (2026-05-22)
+
+### Changed
+- Bumped to track ripvec engine v3.0.2 (the recovery release after a CI-trigger mishap published `ripvec` 3.0.1 to crates.io while iterating on cleanup commits). 3.0.1 is yanked on crates.io; 3.0.2 is the recommended version. The plugin's user-facing surface is unchanged — this bump exists to refresh the marketplace cache so the auto-installer picks up the v3.0.2 release binaries via `ensure-ripvec-mcp.sh`.
+
 ## 3.0.2 (2026-05-21)
 
 ### Changed
