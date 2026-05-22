@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.0.2 (2026-05-21)
+
+### Changed
+- Bumped to track ripvec engine v3.0.1 (the full-repo CUDA/Metal/MLX vestige sweep that closed the audit gap from v3.0.0). The plugin's user-facing surface is unchanged; this bump exists to refresh the marketplace cache so the auto-installer picks up the v3.0.1 release binaries via `ensure-ripvec-mcp.sh`.
+
 ## 3.0.1 (2026-05-21)
 
 ### Changed
