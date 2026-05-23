@@ -1,5 +1,23 @@
 # Changelog
 
+## 4.0.2 (2026-05-22)
+
+Tracks ripvec engine v4.0.2 — three corrections to the 4.0.1 token-budget
+allocator surfaced by live MCP verification:
+
+- Floor-first admission so low-rank files don't crowd out content for top
+  files. Eligible-but-can't-fit files surface in `total_files` and
+  `budget_exhausted` but are not included as empty envelopes.
+- AST kind priority (trait/struct/enum > function/impl > const > field)
+  with def-rank as within-tier tiebreaker. Surfaces a file's *shape*
+  before its *behaviors* — meaningful when def-rank distribution is
+  degenerate (most defs at near-zero rank).
+- 30% calls budget reserve per file. Symbol leftover flows into calls;
+  call leftover flows to the next file.
+
+The plugin binary auto-updater fetches the latest GitHub release; existing
+plugin users get 4.0.2 on next bootstrap.
+
 ## 4.0.1 (2026-05-22)
 
 Tracks ripvec engine v4.0.1 — token-budget allocation for `get_repo_map`.
