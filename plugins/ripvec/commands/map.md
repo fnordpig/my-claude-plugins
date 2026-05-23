@@ -15,6 +15,8 @@ If the user provided a focus file argument, use it:
 get_repo_map(focus_file: "<focus argument>", max_tokens: 2000)
 ```
 
+If the focus file path is ambiguous (matches multiple files), `get_repo_map` returns a `candidates:[...]` list instead of a map. When that happens, present the candidates to the user and ask them to confirm which file they meant, then re-call with the exact path.
+
 If no focus argument, get the default overview:
 
 ```

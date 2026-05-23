@@ -23,11 +23,11 @@ Detect duplicate and near-duplicate code using ripvec's embedding similarity.
 
 ## Process
 
-1. **Scan** — `find_duplicates(threshold: 0.85)` returns all near-duplicate pairs across the codebase
+1. **Scan** — `find_duplicates(threshold: 0.5)` returns all near-duplicate pairs across the codebase. The default threshold is 0.5 (recalibrated post-v3.1). By default, same-file pairs are excluded; pass `intra_file: true` to include them. If the corpus exceeds 10,000 chunks the call will error — in that case narrow scope with `find_similar` on individual locations instead.
 2. **Cluster** — Group pairs by file/function to identify patterns:
    - **Exact copies (>0.95)**: copy-paste that should be a shared function
-   - **Near-duplicates (0.85-0.95)**: similar logic, refactorable with parameterization
-   - **Similar patterns (0.75-0.85)**: worth noting but may be intentional variation
+   - **Near-duplicates (0.75-0.95)**: similar logic, refactorable with parameterization
+   - **Similar patterns (0.5-0.75)**: worth noting but may be intentional variation
 3. **Ground** — For each cluster, use LSP to confirm the duplicates are actually the symbols you think they are. Pass `lsp_location` to `find_references` (native or MCP) to see usage contexts.
 4. **Investigate** — `Read` both locations to understand the actual difference
 5. **Report** — For each duplicate group:

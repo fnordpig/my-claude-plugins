@@ -45,7 +45,7 @@ incoming_calls(function)           # who depends on this
 outgoing_calls(function)           # what this depends on
 get_repo_map(focus_file: file)     # structural neighborhood
 find_similar(file, line)           # parallel implementations
-find_duplicates(threshold: 0.85)   # codebase-wide near-copies
+find_duplicates(threshold: 0.5)    # codebase-wide near-copies (raise to 0.90 for exact-copy focus)
 ```
 
 Both flows consume the same `lsp_location` shape returned by ripvec semantic tools and repo-map entries. Use native `LSP()` in Claude Code when it's available; use ripvec MCP `lsp_*` tools in Codex or any host without native LSP.
@@ -92,10 +92,10 @@ Finds code with similar embeddings — different implementations of the same pat
 ### Step 5: Check for duplicates
 
 ```
-find_duplicates(threshold: 0.90)
+find_duplicates(threshold: 0.5)
 ```
 
-Near-exact copies (>0.90) are likely copy-paste that should be refactored. Similar patterns (0.85-0.90) may need coordinated changes.
+Near-exact copies (>0.90) are likely copy-paste that should be refactored. Similar patterns (0.75-0.90) may need coordinated changes. The default threshold is 0.5 (recalibrated post-v3.1); use a higher value to focus on tighter matches. Add `intra_file: true` to also surface same-file duplicates.
 
 ## Safety checklist before a structural change
 

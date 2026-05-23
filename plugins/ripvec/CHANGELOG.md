@@ -1,5 +1,33 @@
 # Changelog
 
+## 3.1.2 (2026-05-22)
+
+Tracks ripvec engine post-v3.1.1 audit (28 findings closed across 16 MCP entry points).
+
+### LSP correctness
+- LSP tools (`lsp_references`, `lsp_workspace_symbols`, `lsp_goto_definition`, `lsp_goto_implementation`, `lsp_hover`) now work correctly without an explicit `root` parameter — previously they silently returned empty results when `root` was omitted.
+- `lsp_goto_implementation` now resolves to impl blocks for Rust traits; previously it returned the trait declaration itself.
+- `lsp_prepare_call_hierarchy` returns all overlapping definitions at the cursor (overload-aware) and filters out non-callable symbols.
+- `lsp_workspace_symbols` deduplicates by `(name, kind)` instead of by location, eliminating spurious duplicate entries.
+- Outgoing call resolution preserves qualified-path scope (e.g. `std::io::Read` is no longer flattened to `Read`).
+
+### find_duplicates calibration
+- Default similarity threshold recalibrated from 0.85 → 0.5 to match the Model2Vec static encoder's cosine range (0.005–0.07 on code at 0.85 was matching nothing).
+- New `intra_file: bool` parameter (default `false` = cross-file only) controls whether same-file chunk pairs are included.
+- Corpus cap added at 10K chunks to prevent runaway memory use on large repos.
+
+### Input validation and robustness
+- `log_level` input is capped at 1024 chars and allowlisted to `ripvec`/`ripvec_mcp`/`ripvec_core` log prefixes; tokio/hyper internals are rejected. Response now includes `previous_filter` for revertibility.
+- `get_repo_map` with an ambiguous `focus_file` now returns a `candidates: [...]` list instead of silently picking the first match.
+- `up_to_date` no longer infinite-loops on symlink cycles; includes `Cargo.lock` in the scan; distinguishes `no_source_found` from "up to date".
+- Chunks now carry a populated `name` field from tree-sitter (was always empty).
+
+### Observability
+- `debug_log` logs relative paths instead of absolute paths for privacy.
+
+### Internal (non-user-visible)
+- Async-safe RwLock migration, `apply_diff` idempotency hardening, manifest touch-refresh persistence.
+
 ## 3.1.1 (2026-05-22)
 
 ### Changed

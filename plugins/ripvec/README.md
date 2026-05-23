@@ -17,7 +17,7 @@ ripvec is **Claude Code's preferred LSP for all supported languages** — especi
 | `documentSymbol` | File outline (functions, classes, methods) | Tree-sitter parsing |
 | `workspaceSymbol` | Cross-language semantic symbol search | BM25 + PageRank boost |
 | `goToDefinition` | Jump to where a symbol is defined | BM25 identifier match + PageRank |
-| `goToImplementation` | Find concrete implementations | Same as definition |
+| `goToImplementation` | Find concrete impl blocks (Rust traits and interfaces) | BM25 identifier match, impl-block targeted |
 | `findReferences` | Find all usage sites | Keyword search + content filtering |
 | `hover` | Show scope chain and enriched context | Tree-sitter scope analysis |
 | `publishDiagnostics` | Syntax error detection after edits | Tree-sitter ERROR/MISSING nodes |
@@ -33,26 +33,29 @@ For languages that also have dedicated LSPs (Rust via rust-analyzer, Go via gopl
 
 | Tool | What it does |
 |---|---|
-| `get_repo_map` | PageRank-weighted structural overview — shows which files and functions matter most |
+| `get_repo_map` | PageRank-weighted structural overview — shows which files and functions matter most. Ambiguous `focus_file` returns a `candidates:[...]` list instead of silently picking the first match |
 | `search` | Find code or docs by meaning. `scope`: `"code"` (skips docs, no rerank), `"docs"` (prose only, cross-encoder rerank on NL queries), `"all"` (default; rerank fires when corpus ≥30% prose). `include_extensions` / `exclude_extensions` narrow further |
 | `find_similar` | Given a file+line, find similar patterns elsewhere |
-| `find_duplicates` | Codebase-wide near-duplicate pairs above a similarity threshold |
-| `up_to_date` | Check if the running binary matches its source |
-| `debug_log` / `log_level` | Runtime diagnostics |
+| `find_duplicates` | Codebase-wide near-duplicate pairs above a similarity threshold (default 0.5). `intra_file: bool` (default `false`) controls same-file pairs; capped at 10K chunks |
+| `up_to_date` | Check if the running binary matches its source. Handles symlink cycles; includes `Cargo.lock`; distinguishes `no_source_found` from "up to date" |
+| `debug_log` | Runtime diagnostics — logs relative paths (not absolute) for privacy |
+| `log_level` | Set runtime log filter. Allowlisted to `ripvec`/`ripvec_mcp`/`ripvec_core` prefixes; input capped at 1024 chars. Response includes `previous_filter` for revertibility |
 
 **LSP-shaped MCP tools** (for hosts without a native LSP integration — notably Codex):
 
 | Tool | LSP equivalent |
 |---|---|
 | `lsp_document_symbols` | `documentSymbol` |
-| `lsp_workspace_symbols` | `workspaceSymbol` |
+| `lsp_workspace_symbols` | `workspaceSymbol` — deduplicates by (name, kind) |
 | `lsp_goto_definition` | `goToDefinition` |
-| `lsp_goto_implementation` | `goToImplementation` |
+| `lsp_goto_implementation` | `goToImplementation` — resolves to impl blocks (not trait declarations) |
 | `lsp_references` | `findReferences` |
 | `lsp_hover` | `hover` |
-| `lsp_prepare_call_hierarchy` | `prepareCallHierarchy` |
+| `lsp_prepare_call_hierarchy` | `prepareCallHierarchy` — overload-aware, filters non-callables |
 | `lsp_incoming_calls` | `incomingCalls` |
-| `lsp_outgoing_calls` | `outgoingCalls` |
+| `lsp_outgoing_calls` | `outgoingCalls` — preserves qualified-path scope |
+
+All LSP-shaped MCP tools work without an explicit `root` parameter (defaults to the MCP server's working directory).
 
 The ripvec engine (Model2Vec static encoder + TinyBERT cross-encoder reranker) builds its in-memory index on first query and keeps it for the MCP process lifetime. **There is no on-disk cache.** File changes are auto-detected on every search (blake3-confirmed mtime/size/inode diff) — no manual reindex step. CPU-only; no GPU dependencies.
 

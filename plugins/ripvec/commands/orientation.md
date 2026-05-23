@@ -65,7 +65,7 @@ LSP prepare_call_hierarchy(symbol)          → get call-hierarchy item
 LSP incoming_calls(item)                    → blast radius (who depends on this)
 LSP outgoing_calls(item)                    → what this depends on
 find_similar(file, line)                    → parallel implementations elsewhere
-find_duplicates(threshold: 0.90)            → copy-paste candidates
+find_duplicates(threshold: 0.5)             → copy-paste candidates (raise to 0.90 for exact-copy focus)
 ```
 
 Use this **before any signature change, rename, or structural refactor**.
@@ -139,7 +139,7 @@ These names are valid in both Codex (direct) and Claude Code (after `ToolSearch`
 - `search` — find code/docs by meaning
 - `get_repo_map` — PageRank structural overview (optional `focus_file`)
 - `find_similar` — given file+line, find similar embeddings
-- `find_duplicates` — codebase-wide near-duplicate pairs
+- `find_duplicates` — codebase-wide near-duplicate pairs (default threshold: 0.5; `intra_file: true` to include same-file pairs; errors above 10K chunks)
 - `up_to_date` — is the running binary newer than its source?
 - `debug_log` / `log_level` — runtime diagnostics
 
