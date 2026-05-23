@@ -1,5 +1,26 @@
 # Changelog
 
+## 4.0.4 (2026-05-22)
+
+Tracks ripvec engine v4.0.4 — function-tier promotion via corpus-relative rank thresholds.
+
+The 4.0.3 release enriched def-level PageRank via improved call-edge extraction
+(qualified-path capture, method receiver heuristics, impl→trait edge linking),
+delivering 18.8× variance and 265 distinct nonzero ranks on the ripvec corpus.
+However, the 4.0.2 AST-priority sort (types before functions) was hiding that
+variance: types would fill the per-file token budget before high-rank functions
+could surface.
+
+4.0.4 adds corpus-relative tier promotion to `get_repo_map`:
+
+- Defs whose `def_rank` exceeds 4× the corpus 75th percentile get +1 sort tier.
+- Defs that exceed 16× get +2 sort tiers.
+- Thresholds are computed from the corpus 75th percentile of nonzero def-ranks
+  (self-calibrating): flat distributions see no promotions; informative
+  distributions surface load-bearing defs proportionally.
+- Attenuation tier tracking uses the original AST priority (not the promoted
+  value) to preserve the 4.0.2 logarithmic cutoff invariants.
+
 ## 4.0.3 (2026-05-22)
 
 Tracks ripvec engine v4.0.3 — call-edge extractor enrichment.
