@@ -1,5 +1,29 @@
 # Changelog
 
+## 4.0.1 (2026-05-22)
+
+Tracks ripvec engine v4.0.1 — token-budget allocation for `get_repo_map`.
+
+### Breaking changes
+
+- `get_repo_map` parameter `max_files` removed. Replaced by `token_budget` (default 4000 tokens).
+  Callers that pass `max_files` will have it silently ignored (serde unknown-field behaviour);
+  response size is now controlled by `token_budget` instead of a file count.
+
+### New capabilities
+
+- `token_budget` parameter controls `get_repo_map` response size. Budget is allocated across
+  files by `PageRank` share (40% cap per file, 200-byte envelope floor). Symbols within each
+  file fill the allocation in def-rank descending order with a logarithmic attenuation cutoff.
+- `RepoMapSymbol.rank` — definition-level `PageRank` from `RepoGraph.def_ranks`. Consumers
+  can now prioritise symbols by structural importance.
+- `RepoMapCall` — outgoing call-edges are now objects with `lsp_location` and `rank` (target
+  file `base_rank`), sorted by rank descending. Previously calls were bare `lsp_location` objects.
+- `RepoMapFile.truncated_symbols` + `truncated_calls` — count of omitted entries per file.
+- `GetRepoMapResponse.estimated_bytes`, `budget_bytes`, `budget_exhausted` — real-time budget
+  telemetry. `budget_exhausted == (total_files > files.len())`.
+- `capped` field retained as a synonym for `budget_exhausted` for backward compatibility.
+
 ## 4.0.0 (2026-05-22)
 
 Tracks ripvec engine v4.0.0 — LSP-shaped composability release.
