@@ -1,5 +1,82 @@
 # Changelog
 
+## 4.0.7 (2026-05-23)
+
+Tracks ripvec engine v4.0.7 — substrate fixes from the third 5-corpus
+pattern revalidation campaign. Closes 4 critical bugs (I#37, I#38,
+I#39, I#40) plus the SQL suffix-match landed earlier this cycle.
+
+This is a deliberate substrate-only release before the forthcoming
+4.1.0 `find_dead_code` MCP tool. The 4.1.0 substrate (X1 entry-point
+detection in `entry_points.rs`) landed dormant in 4.0.6; X2 (BFS
+algorithm) and X3 (MCP tool wrapper) ship in 4.1.0 on top of a
+substrate-clean foundation.
+
+### Fixed
+
+- **I#38 (biggest fix)**: Every position-scoped LSP tool
+  (`lsp_hover`, `lsp_goto_definition`, `lsp_goto_implementation`,
+  `lsp_prepare_call_hierarchy`, `lsp_references`) silently returned
+  empty when called with `root=None` against a corpus other than
+  `project_root`. Root cause: `resolve_lsp_file_lite` joined the
+  relative `file_path` from a search result against `project_root`,
+  producing a bogus absolute path. Fix: `resolve_lsp_file_lite`
+  is now `async` and probes the session's indexed roots
+  (`ripvec_indices`, `root_indices`, `root_graphs`) to find a root
+  that actually contains the file. The bug was the same root-class
+  as I#13/I#15 but in a different code path.
+- **I#37**: `lsp_document_symbols` now emits multi-inherited Python
+  classes (Flask, MnemosyneApp). Root cause: 4096-byte chunk-size
+  cap split large classes into anonymous chunks filtered by kind.
+  Fix: `document_symbol` uses unbounded `ChunkConfig` so the outline
+  path never window-splits.
+- **I#39 (partial)**: Python `@classmethod`, `@staticmethod`, and
+  arbitrary decorators no longer over-classified as Property
+  (kind=7). New `lsp_symbol_kind_for_node` function with decorator-
+  aware logic. Wiring into projection sites deferred to 4.0.8.
+- **I#40**: `lsp_references` is position-tolerant within a def's
+  identifier line. Pre-fix on flask: char=0 → 0 refs, char=4 → 48.
+  Post-fix: char=0/4/7/8/12/15/23 → all return the def's references.
+- **SQL bare-name suffix resolution** (committed earlier this cycle):
+  aurora's gold → silver → bronze dbt/sqlmesh lineage composes
+  through `get_repo_map.calls[]` via underscore-boundary suffix
+  matching.
+
+### Documentation
+
+- AGENTIC_PATTERNS_4_0.md Part VIII added: cross-corpus revalidation
+  findings (ripvec 68%, mnemosyne 70%, flask 63%, aurora 88%);
+  drift threshold recalibration table (0.15 → 0.45+); new patterns
+  P10/F7/F8/N3; N1 generalization to "PageRank Hijack."
+- RIPVEC_IMPROVEMENTS.md I#37 — I#48 appended with cross-corpus
+  reproduction evidence.
+- docs/I38_DIAGNOSIS.md added: root-cause walkthrough for the
+  position-scoped LSP empty-results bug class.
+
+### Deferred to 4.0.8 / 4.1.0
+
+- 4.0.8: F1 decorator wiring at projection sites + wiring-gap
+  cleanup pass.
+- 4.1.0: `find_dead_code` MCP tool (X2 BFS + X3 tool wrapper).
+
+## 4.0.6 (2026-05-23)
+
+Tracks ripvec engine v4.0.6 — second cross-corpus substrate-fix
+wave. Closes 17 issues (I#19 — I#36) across 4 waves of fronts:
+kind taxonomy completion, dedup math, cursor resilience, reranker
+discipline, focus_file fix (T1), Go inverse call-graph (P1),
+Python MRO/mixin dispatch (Q1), HCL engine extensions (Cluster R:
+qualified_name, terraform_remote_state edges, module DAG, locals
+expansion, content_kind tagging, symbol-grade references), SQL
+FROM/JOIN/CTE extraction (Cluster S).
+
+Companion: X1 substrate for the forthcoming 4.1.0 find_dead_code
+tool — `crates/ripvec-core/src/entry_points.rs` (746 lines)
+implementing `EntryPointDetector` trait + Rust/Python/Go detectors.
+Six pub items intentional Type-B wired-stubs annotated for X2.
+
+See engine CHANGELOG for full per-issue detail.
+
 ## 4.0.5 (2026-05-23)
 
 Tracks ripvec engine v4.0.5 — substrate fixes from the 5-corpus pattern
