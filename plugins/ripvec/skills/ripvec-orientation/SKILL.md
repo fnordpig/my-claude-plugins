@@ -96,6 +96,120 @@ no on-disk cache.
 
 ---
 
+## §3.5 — Dispatch discipline (MANDATORY for agent briefings)
+
+**When you brief a sibling agent for any ripvec-shaped task, the briefing
+MUST open with these blocks before the agent's first non-MCP action.
+Tool-availability alone does not produce ripvec-first behavior; the
+skills teach the discipline that the tools enact.**
+
+### Required dispatch preamble
+
+Every briefing for an agent doing codebase orientation / debugging /
+refactoring / teaching / audit work MUST include the skill-load block
+and a host-conditional tool-availability block.
+
+**Block 1 — Skill loads (host-agnostic; works on Claude Code AND
+Codex; both honor the `Skill` tool with this exact shape):**
+
+```
+## MANDATORY FIRST ACTIONS (in order, before any other tool call)
+
+Skill("ripvec:ripvec-orientation")
+Skill("ripvec:<primary-hub>")     # cartographer | detective | refactorer | onboarder | sentinel
+Skill("ripvec:<secondary-hub>")   # optional but encouraged when work crosses orientations
+Skill("ripvec:intent-routing")    # always — phrasal routing for sub-tasks the agent surfaces
+Skill("ripvec:recipes")           # always — the named-compositional-pattern library
+# If the corpus is language-specific, add the matching language skill:
+Skill("ripvec:<language>-recipes")   # c | javascript | python | rust | go | jvm | polyglot
+```
+
+**Block 2 — Tool availability (host-conditional; pick ONE of the
+following based on the agent's runtime):**
+
+*If the briefing targets a **Claude Code** subagent* (tools are
+deferred and must be loaded via `ToolSearch`):
+
+```
+ToolSearch("select:mcp__ripvec__get_repo_map,mcp__ripvec__search,mcp__ripvec__find_similar,mcp__ripvec__find_duplicates,mcp__ripvec__find_dead_code")
+ToolSearch("select:mcp__ripvec__lsp_workspace_symbols,mcp__ripvec__lsp_document_symbols,mcp__ripvec__lsp_hover,mcp__ripvec__lsp_references,mcp__ripvec__lsp_prepare_call_hierarchy,mcp__ripvec__lsp_incoming_calls,mcp__ripvec__lsp_outgoing_calls")
+# Cite by name; do not wildcard. Drop any tool the front truly does not need.
+# Some hosts namespace as mcp__plugin_ripvec_ripvec__* — try that prefix if
+# the unprefixed mcp__ripvec__* form fails.
+```
+
+*If the briefing targets a **Codex** subagent* (tools are bare-named
+and always available, no loading required):
+
+```
+# No ToolSearch needed on Codex. Ripvec tools are callable by bare name:
+#   get_repo_map, search, find_similar, find_duplicates, find_dead_code,
+#   lsp_workspace_symbols, lsp_document_symbols, lsp_hover, lsp_references,
+#   lsp_prepare_call_hierarchy, lsp_incoming_calls, lsp_outgoing_calls
+# The Codex LSP() native tool is unavailable; ripvec MCP lsp_* tools ARE
+# the LSP path on Codex.
+```
+
+**Failure clause (BOTH hosts):**
+
+```
+STOP and report BLOCKED if any required Skill fails to load, or if
+the Claude Code agent's ToolSearch returns no matches for the named
+tools, or if a Codex agent's first ripvec tool call returns
+"tool not found". Do NOT fall back to grep/Read — the bug class is
+silent-wrong-answer.
+```
+
+### Why this is mandatory (empirical)
+
+Without this preamble, agents revert to `Grep` / `Read` even when
+ripvec MCP tools are present. **The skill content teaches the
+*discipline*; the tool list alone makes the tools *options among
+many*.** Constitutional-cycle observation across the 4.1.x release
+arc: briefings with the `Skill()` opener produce ripvec-first
+behavior (verified across 12 fronts in Cycles 11-12); briefings
+that only mention tool names produce grep-first behavior (5 fronts
+in Cycle 12 Wave 1 regressed when this preamble was dropped).
+
+### How to pick `<primary-hub>`
+
+Match the task shape to the orientation per §1 above. If unsure,
+default to `Skill("ripvec:intent-routing")` and let the agent
+self-route. Never name all five hubs — token cost grows with no
+discipline gain.
+
+### What NOT to do
+
+- Don't say "use ripvec" in the briefing without a `Skill()` opener — it doesn't work.
+- Don't list MCP tools without a `Skill()` opener — tools without discipline produce grep-fallback.
+- Don't permit a "fallback to grep is allowed if ripvec is slow" clause — ripvec indexes at ~23ms per repo; the fallback is never warranted on cost.
+- Don't omit the `STOP and report BLOCKED if any fail` clause — silent fallback hides regressions.
+- Don't ship a Claude-Code-only `ToolSearch(...)` block to a Codex agent — `ToolSearch` is a Claude Code primitive and will error on Codex. Pick Block 2's host-matching variant.
+- Don't ship a Codex bare-name-list to a Claude Code agent — bare ripvec tool calls without prior `ToolSearch` registration will be rejected as `InputValidationError`. Pick Block 2's host-matching variant.
+
+### How to identify host at dispatch time
+
+- If you are dispatching via Claude Code's `Agent` tool with
+  `subagent_type` set: Claude Code host. Use the ToolSearch block.
+- If you are dispatching via Codex's `task` / `delegate` mechanism:
+  Codex host. Use the bare-name block.
+- If you are uncertain: include BOTH blocks, prefixed with `# CLAUDE
+  CODE ONLY:` and `# CODEX ONLY:` comment fences. The agent's first
+  action discards the irrelevant block.
+
+### When dispatching `ripvec:*` subagents (not raw `general-purpose`)
+
+The 4 executive-function subagents (`refactor-planner`, `bug-detective`,
+`codebase-teacher`, `drift-auditor`) already preload their hub skills
+via the `skills:` frontmatter field. For these, the per-briefing
+`Skill()` preamble is redundant but not harmful — leave it in for
+explicitness and as a verification anchor for the agent's report.
+
+For `general-purpose` and `swarm-orchestration:swarm-front-implementer`
+subagents, the preamble is load-bearing — they don't preload anything.
+
+---
+
 ## §4 — Plugin surface (4.1.10)
 
 ### Skills (this plugin — 4.1.10)
